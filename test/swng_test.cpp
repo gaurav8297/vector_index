@@ -1,22 +1,28 @@
 #include "spdlog/fmt/fmt.h"
 #include "gtest/gtest.h"
+#include "small_world.h"
 #include "utils.h"
-#include "sa_tree.h"
 
 using namespace vector_index;
 
-TEST(SATreeTest, Benchmark1) {
+TEST(SWGTest, Benchmark) {
     size_t baseDimension, baseNumVectors;
     auto basePath = "/Users/gauravsehgal/work/vector_index/data";
-    auto benchmarkType = "siftsmall";
+    auto benchmarkType = "gist";
     auto baseVectorPath = fmt::format("{}/{}/{}_base.fvecs", basePath, benchmarkType, benchmarkType);
     auto queryVectorPath = fmt::format("{}/{}/{}_query.fvecs", basePath, benchmarkType, benchmarkType);
     auto gtVectorPath = fmt::format("{}/{}/{}_groundtruth.ivecs", basePath, benchmarkType, benchmarkType);
 
     float* baseVecs = Utils::fvecs_read(baseVectorPath.c_str(),&baseDimension,&baseNumVectors);
 
-    auto saTree = SATree(baseVecs, baseDimension, baseNumVectors);
-    printf("Build time: %f s\n", saTree.buildTime.count());
+    int mCreate = 100;
+    int kCreate = 100;
+
+    int mSearch = 10000;
+    int kSearch = 10;
+
+    auto swng = SmallWorldNG(baseVecs, baseDimension, baseNumVectors, mCreate, kCreate);
+    printf("Build time: %f s\n", swng.buildTime.count());
 
     size_t queryDimension, queryNumVectors;
     float* queryVecs = Utils::fvecs_read(queryVectorPath.c_str(), &queryDimension, &queryNumVectors);
@@ -40,23 +46,42 @@ TEST(SATreeTest, Benchmark1) {
         groundTruth.push_back(gt);
     }
 
+    size_t vectorsToQuery = 10;
     auto avgNodesVisited = 0;
     double avgSearchTime = 0.0;
-
-    for (int i = 0; i < queryEmbeddings.size(); i++) {
+    int avgRecall = 0;
+    size_t maxHops = 0;
+    size_t avgHops = 0;
+    for (int i = 0; i < vectorsToQuery; i++) {
         auto query = queryEmbeddings[i];
         auto gt = groundTruth[i];
-        auto res = saTree.knnSearch(query, 100);
+        auto res = swng.knnSearch(query, mSearch, kSearch);
+        int j = 0;
         for (auto nodeWithDistance : res.nodes) {
-            ASSERT_TRUE(std::find(gt.begin(), gt.end(), nodeWithDistance.node->id) != gt.end());
+            if (j >= kSearch) {
+                break;
+            }
+            if (std::find(gt.begin(), gt.end(), nodeWithDistance.node->id) != gt.end()) {
+                avgRecall++;
+            }
+            j++;
         }
         avgNodesVisited += res.nodesVisited;
         avgSearchTime += res.searchTime.count();
-        printf("Nodes visited: %zu\n", res.nodesVisited);
-        printf("Search time: %f s\n", res.searchTime.count());
+        maxHops = std::max(maxHops, res.maxHops);
+        avgHops += res.avgHops;
     }
     printf("\n=====================================\n");
-    printf("Build time: %f s\n", saTree.buildTime.count());
-    printf("Avg nodes visited: %zu/%zu\n", avgNodesVisited / queryNumVectors, baseNumVectors);
-    printf("Avg search time: %f s\n", avgSearchTime / (double) queryNumVectors);
+    printf("Build time: %f s\n", swng.buildTime.count());
+    printf("Avg nodes visited: %zu/%zu\n", avgNodesVisited / vectorsToQuery, baseNumVectors);
+    printf("Avg search time: %f s\n", avgSearchTime / (double) vectorsToQuery);
+    printf("Avg recall: %zu/%d\n", avgRecall / vectorsToQuery, kSearch);
+    printf("Max hops: %zu\n", maxHops);
+    printf("Avg hops: %zu\n", avgHops / vectorsToQuery);
+
+    size_t avgDegree, maxDegree, minDegree;
+    swng.getGraphStats(avgDegree, maxDegree, minDegree);
+    printf("Avg degree: %zu\n", avgDegree);
+    printf("Max degree: %zu\n", maxDegree);
+    printf("Min degree: %zu\n", minDegree);
 }

@@ -12,4 +12,5 @@ target_link_libraries(GTest::GTest INTERFACE gtest_main)
 target_link_libraries(GTest::GTest INTERFACE gmock_main)
 
 enable_testing()
-add_test(vector_index_test sa_tree_test.cpp)
+add_test(sa_tree_test sa_tree_test.cpp)
+add_test(swng_test swng_test.cpp)

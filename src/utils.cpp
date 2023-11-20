@@ -1,5 +1,6 @@
 #include <sys/stat.h>
 #include <cmath>
+#include <random>
 #include "include/utils.h"
 
 namespace vector_index {
@@ -44,5 +45,12 @@ namespace vector_index {
 
         fclose(f);
         return x;
+    }
+
+    int Utils::rand_int(int min, int max) {
+        std::random_device r;
+        std::default_random_engine e1(r());
+        std::uniform_int_distribution<int> uniform_dist(min,max);
+        return uniform_dist(e1);
     }
 }
