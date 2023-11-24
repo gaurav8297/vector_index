@@ -4,20 +4,21 @@
 #include "utils.h"
 
 using namespace vector_index;
+using namespace vector_index::small_world;
 
 TEST(SWGTest, Benchmark) {
     size_t baseDimension, baseNumVectors;
-    auto basePath = "/Users/gauravsehgal/work/paper/uniform_data";
-    auto benchmarkType = "50";
-    auto baseVectorPath = fmt::format("{}/{}_base.fvecs", basePath, benchmarkType, benchmarkType);
-    auto queryVectorPath = fmt::format("{}/{}_query.fvecs", basePath, benchmarkType, benchmarkType);
-    auto gtVectorPath = fmt::format("{}/{}_groundtruth.ivecs", basePath, benchmarkType, benchmarkType);
+    auto basePath = "/Users/gauravsehgal/work/vector_index/data";
+    auto benchmarkType = "siftsmall";
+    auto baseVectorPath = fmt::format("{}/{}/{}_base.fvecs", basePath, benchmarkType, benchmarkType);
+    auto queryVectorPath = fmt::format("{}/{}/{}_query.fvecs", basePath, benchmarkType, benchmarkType);
+    auto gtVectorPath = fmt::format("{}/{}/{}_groundtruth.ivecs", basePath, benchmarkType, benchmarkType);
 
     float* baseVecs = Utils::fvecs_read(baseVectorPath.c_str(),&baseDimension,&baseNumVectors);
 
-    auto mCreates = {60};
-    auto kCreates = {150};
-    auto mSearchs = {4, 8, 16, 32, 64, 128};
+    auto mCreates = {10};
+    auto kCreates = {10};
+    auto mSearches = {32, 64, 128};
     int kSearch = 10;
 
     for (auto mCreate : mCreates) {
@@ -47,27 +48,21 @@ TEST(SWGTest, Benchmark) {
                 groundTruth.push_back(gt);
             }
 
-            for (auto mSearch : mSearchs) {
-                size_t vectorsToQuery = 1000;
+            for (auto mSearch : mSearches) {
                 size_t avgNodesVisited = 0;
                 size_t avgDepth = 0;
                 size_t maxDepth = 0;
                 size_t avgHops = 0;
                 double avgSearchTime = 0.0;
                 int avgRecall = 0;
-                for (int i = 0; i < vectorsToQuery; i++) {
+                for (int i = 0; i < queryNumVectors; i++) {
                     auto query = queryEmbeddings[i];
                     auto gt = groundTruth[i];
-                    auto res = swng.knnSearch(query, mSearch, kSearch);
-                    int j = 0;
+                    auto res = swng.beamKnnSearch(query, mSearch, kSearch);
                     for (auto nodeWithDistance: res.nodes) {
-                        if (j >= kSearch) {
-                            break;
-                        }
-                        if (std::find(gt.begin(), gt.end(), nodeWithDistance.node->id) != gt.end()) {
+                        if (std::find(gt.begin(), gt.end(), nodeWithDistance.item->id) != gt.end()) {
                             avgRecall++;
                         }
-                        j++;
                     }
                     avgNodesVisited += res.nodesVisited;
                     avgHops += res.hops;
@@ -88,11 +83,11 @@ TEST(SWGTest, Benchmark) {
 
                 printf("mSearch: %d\n", mSearch);
                 printf("kSearch: %d\n", kSearch);
-                printf("Avg search time: %f s\n", avgSearchTime / (double) vectorsToQuery);
-                printf("Avg recall: %zu/%d\n", avgRecall / vectorsToQuery, kSearch);
-                printf("Avg nodes visited: %zu/%zu\n", avgNodesVisited / vectorsToQuery, baseNumVectors);
-                printf("Avg hops: %zu\n", avgHops / vectorsToQuery);
-                printf("Avg depth: %zu\n", avgDepth / vectorsToQuery);
+                printf("Avg search time: %f s\n", avgSearchTime / (double) queryNumVectors);
+                printf("Avg recall: %zu/%d\n", avgRecall / queryNumVectors, kSearch);
+                printf("Avg nodes visited: %zu/%zu\n", avgNodesVisited / queryNumVectors, baseNumVectors);
+                printf("Avg hops: %zu\n", avgHops / queryNumVectors);
+                printf("Avg depth: %zu\n", avgDepth / queryNumVectors);
                 printf("Max depth: %zu\n", maxDepth);
             }
         }

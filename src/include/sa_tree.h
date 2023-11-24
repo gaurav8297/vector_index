@@ -3,7 +3,7 @@
 #include <vector>
 #include <set>
 
-namespace vector_index {
+namespace vector_index::sa_tree {
     struct Node {
         int id;
         std::vector<float> embedding;
@@ -51,4 +51,4 @@ namespace vector_index {
         std::chrono::duration<double> buildTime;
         size_t nodesVisited;
     };
-}
+} // namespace vector_index::sa_tree

@@ -14,4 +14,4 @@ namespace vector_index {
 
         static int rand_int(int min, int max);
     };
-}
+} // namespace vector_index

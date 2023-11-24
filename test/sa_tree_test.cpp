@@ -4,6 +4,7 @@
 #include "sa_tree.h"
 
 using namespace vector_index;
+using namespace vector_index::sa_tree;
 
 TEST(SATreeTest, Benchmark1) {
     size_t baseDimension, baseNumVectors;

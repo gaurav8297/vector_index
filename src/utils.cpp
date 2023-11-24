@@ -63,4 +63,4 @@ namespace vector_index {
         std::uniform_int_distribution<int> uniform_dist(min,max);
         return uniform_dist(e1);
     }
-}
+} // namespace vector_index

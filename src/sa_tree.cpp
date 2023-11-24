@@ -3,7 +3,7 @@
 #include "include/sa_tree.h"
 #include "utils.h"
 
-namespace vector_index {
+namespace vector_index::sa_tree {
     SATree::SATree(float *data, size_t dimension, size_t numVectors) {
         std::vector<std::unique_ptr<Node>> nodes;
         auto i = 0;
@@ -188,4 +188,4 @@ namespace vector_index {
     bool operator<(const NodeWithDistance &x, const NodeWithDistance &y) {
         return x.distance < y.distance;
     }
-}
+} // namespace vector_index::sa_tree
