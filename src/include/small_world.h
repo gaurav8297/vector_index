@@ -1,13 +1,14 @@
 #pragma once
 
 #include <vector>
+#include <unordered_set>
 #include <set>
 
 namespace vector_index {
     struct SWNGNode {
         int id;
         std::vector<float> embedding;
-        std::vector<SWNGNode*> children;
+        std::unordered_set<SWNGNode*> children;
     };
 
     struct SWNGNodeWithDistance {
@@ -19,8 +20,8 @@ namespace vector_index {
         std::set<SWNGNodeWithDistance> nodes;
         std::chrono::duration<double> searchTime;
         size_t nodesVisited;
-        size_t maxHops;
-        size_t avgHops;
+        size_t hops;
+        size_t depth;
     };
 
     class SmallWorldNG {

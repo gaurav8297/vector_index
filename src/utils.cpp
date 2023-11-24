@@ -16,6 +16,16 @@ namespace vector_index {
         return sqrt(distance);
     }
 
+    double Utils::cosine_distance(std::vector<float> &a, std::vector<float> &b) {
+        double dot = 0.0, denom_a = 0.0, denom_b = 0.0 ;
+        for (int i = 0; i < a.size(); i++) {
+            dot += a[i] * b[i] ;
+            denom_a += a[i] * a[i] ;
+            denom_b += b[i] * b[i] ;
+        }
+        return dot / (sqrt(denom_a) * sqrt(denom_b)) ;
+    }
+
     float* Utils::fvecs_read(const char *fname, size_t *d_out, size_t *n_out) {
         FILE* f = fopen(fname, "r");
         if (!f) {
