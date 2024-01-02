@@ -47,7 +47,7 @@ namespace vector_index::small_world {
             return;
         }
 
-        auto result = beamKnnSearch(nodeEmbedding, m, k);
+        auto result = greedyKnnSearch(nodeEmbedding, m, k);
         for (auto record: result.nodes) {
             node->children.insert(record.item);
             record.item->children.insert(node.get());
@@ -71,6 +71,7 @@ namespace vector_index::small_world {
         std::unordered_set<int> visited;
         size_t nodesVisited = 0;
         auto start = std::chrono::high_resolution_clock::now();
+        size_t maxDepth = 0;
         for (int i = 0; i < b; i++) {
             if (visited.size() >= nodes.size()) {
                 break;
@@ -88,6 +89,7 @@ namespace vector_index::small_world {
         while (true) {
             auto closestDistance = beam.last().distance;
             MinQueue<Node *> newBeam(b);
+            auto flag = false;
             for (auto record: beam.getRecords()) {
                 for (auto childNode: record.item->children) {
                     if (visited.contains(childNode->id)) {
@@ -97,7 +99,11 @@ namespace vector_index::small_world {
                     nodesVisited++;
                     visited.insert(childNode->id);
                     newBeam.insert(child);
+                    flag = true;
                 }
+            }
+            if (flag) {
+                maxDepth++;
             }
             for (auto record: newBeam.getRecords()) {
                 beam.insert(record);
@@ -113,7 +119,63 @@ namespace vector_index::small_world {
             result.insert(nodeWithDistance);
         }
 
-        return Result{result.getRecords(), std::chrono::high_resolution_clock::now() - start, nodesVisited, 0, 0};
+        return Result{result.getRecords(), std::chrono::high_resolution_clock::now() - start, nodesVisited, 0, maxDepth};
+    }
+
+    Result SmallWorldNG::beamKnnSearch2(std::vector<float> &query, int b, int k) {
+        MinQueue<Node *> beam(b);
+        MinQueue<Node *> result(k);
+        std::unordered_set<int> visited;
+        size_t nodesVisited = 0;
+        auto start = std::chrono::high_resolution_clock::now();
+        size_t maxDepth = 0;
+        for (int i = 0; i < b; i++) {
+            if (visited.size() >= nodes.size()) {
+                break;
+            }
+            int entryPointIdx = Utils::rand_int(0, nodes.size() - 1);
+            while (visited.contains(entryPointIdx)) {
+                entryPointIdx = Utils::rand_int(0, nodes.size() - 1);
+            }
+            auto entryPoint = Record<Node*>{nodes.at(entryPointIdx).get(), Utils::l2_distance(nodes.at(entryPointIdx).get()->embedding, query)};
+            nodesVisited++;
+            beam.insert(entryPoint);
+            result.insert(entryPoint);
+            visited.insert(entryPoint.item->id);
+        }
+
+        while (true) {
+            double closestDistance = INFINITY;
+            if (result.size() >= k) {
+                closestDistance = result.last().distance;
+            }
+            MinQueue<Node *> newBeam(b);
+            auto flag = false;
+            for (auto record: beam.getRecords()) {
+                for (auto childNode: record.item->children) {
+                    if (visited.contains(childNode->id)) {
+                        continue;
+                    }
+                    auto child = Record<Node *>{childNode, Utils::l2_distance(childNode->embedding, query)};
+                    nodesVisited++;
+                    visited.insert(childNode->id);
+                    newBeam.insert(child);
+                    result.insert(child);
+                    flag = true;
+                }
+            }
+            if (flag) {
+                maxDepth++;
+            }
+            for (auto record: newBeam.getRecords()) {
+                beam.insert(record);
+            }
+            if (result.last().distance >= closestDistance) {
+                break;
+            }
+        }
+
+        return Result{result.getRecords(), std::chrono::high_resolution_clock::now() - start, nodesVisited, 0, maxDepth};
     }
 
     Result SmallWorldNG::someOtherKnnSearch(std::vector<float> &query, int b, int k) {
@@ -168,7 +230,7 @@ namespace vector_index::small_world {
         return Result{result.getRecords(), end - start, nodesVisited, 0, 0};
     }
 
-    Result SmallWorldNG::nswKnnSearch(std::vector<float> &query, int m, int k) {
+    Result SmallWorldNG::greedyKnnSearch(std::vector<float> &query, int m, int k) {
         std::unordered_set<int> visited;
         MinQueue<Node *> result(k);
         size_t hops = 0;

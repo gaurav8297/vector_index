@@ -31,9 +31,11 @@ namespace vector_index::small_world {
 
         Result beamKnnSearch(std::vector<float> &query, int b, int k);
 
+        Result beamKnnSearch2(std::vector<float> &query, int b, int k);
+
         Result someOtherKnnSearch(std::vector<float> &query, int b, int k);
 
-        Result nswKnnSearch(std::vector<float> &query, int m, int k);
+        Result greedyKnnSearch(std::vector<float> &query, int m, int k);
 
         void getGraphStats(size_t &avgDegree, size_t &maxDegree, size_t &minDegree);
 

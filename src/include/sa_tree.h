@@ -28,6 +28,7 @@ namespace vector_index::sa_tree {
         std::multiset<NodeWithDistance> nodes;
         std::chrono::duration<double> searchTime;
         size_t nodesVisited;
+        size_t maxDepth;
     };
 
     class SATree {
@@ -35,6 +36,10 @@ namespace vector_index::sa_tree {
         SATree(float* data, size_t dimension, size_t numVectors);
         ResultObject rangeSearch(std::vector<float> &query, double r, double digression);
         ResultObject knnSearch(std::vector<float> &query, int k);
+        ResultObject beamKnnSearch2(std::vector<float> &query, int b, int k);
+        ResultObject beamKnnSearch(std::vector<float> &query, int b, int k);
+        ResultObject greedyKnnSearch(std::vector<float> &query, int m, int b, int k);
+        void getGraphStats(size_t &avgDegree, size_t &maxDegree, size_t &minDegree);
 
     private:
         // TODO - implement incremental insert

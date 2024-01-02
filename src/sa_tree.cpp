@@ -1,7 +1,9 @@
 #include <cmath>
 #include <queue>
+#include <unordered_set>
 #include "include/sa_tree.h"
-#include "utils.h"
+#include "include/utils.h"
+#include "include/min_queue.h"
 
 namespace vector_index::sa_tree {
     SATree::SATree(float *data, size_t dimension, size_t numVectors) {
@@ -179,6 +181,181 @@ namespace vector_index::sa_tree {
         }
         auto end = std::chrono::high_resolution_clock::now();
         return {result, end - start, nodesVisited};
+    }
+
+    ResultObject SATree::beamKnnSearch2(std::vector<float> &query, int b, int k) {
+        MinQueue<Node *> beam(b);
+        MinQueue<Node *> result(k);
+        size_t nodesVisited = 0;
+        size_t maxDepth = 0;
+        std::unordered_set<int> visited;
+        auto start = std::chrono::high_resolution_clock::now();
+        beam.insert({root.get(), Utils::l2_distance(root->embedding, query)});
+        result.insert({root.get(), Utils::l2_distance(root->embedding, query)});
+        while (true) {
+            double closestDistance = INFINITY;
+            if (result.size() >= k) {
+                closestDistance = result.last().distance;
+            }
+            MinQueue<Node *> newBeam(b);
+            auto flag = false;
+            for (auto record: beam.getRecords()) {
+                for (const auto &childNode: record.item->children) {
+                    if (visited.contains(childNode->id)) {
+                        continue;
+                    }
+                    auto child = Record<Node *>{childNode.get(), Utils::l2_distance(childNode->embedding, query)};
+                    nodesVisited++;
+                    newBeam.insert(child);
+                    visited.insert(childNode->id);
+                    flag = true;
+                    result.insert(child);
+                }
+            }
+            if (flag) {
+                maxDepth++;
+            }
+            for (auto record: newBeam.getRecords()) {
+                beam.insert(record);
+            }
+            if (result.last().distance >= closestDistance) {
+                break;
+            }
+        }
+
+        // copy beam to result
+        std::multiset<NodeWithDistance> newResult;
+        for (auto nodeWithDistance: result.getRecords()) {
+            newResult.insert({nodeWithDistance.item, nodeWithDistance.distance});
+        }
+
+        return {newResult, std::chrono::high_resolution_clock::now() - start, nodesVisited, maxDepth};
+    }
+
+    ResultObject SATree::beamKnnSearch(std::vector<float> &query, int b, int k) {
+        MinQueue<Node *> beam(b);
+        size_t nodesVisited = 0;
+        size_t maxDepth = 0;
+        std::unordered_set<int> visited;
+        auto start = std::chrono::high_resolution_clock::now();
+        beam.insert({root.get(), Utils::l2_distance(root->embedding, query)});
+
+        while (true) {
+            double closestDistance = INFINITY;
+            if (beam.size() >= b) {
+                closestDistance = beam.last().distance;
+            }
+            MinQueue<Node *> newBeam(b);
+            auto flag = false;
+            for (auto record: beam.getRecords()) {
+                for (const auto &childNode: record.item->children) {
+                    if (visited.contains(childNode->id)) {
+                        continue;
+                    }
+                    auto child = Record<Node *>{childNode.get(), Utils::l2_distance(childNode->embedding, query)};
+                    nodesVisited++;
+                    newBeam.insert(child);
+                    visited.insert(childNode->id);
+                    flag = true;
+                }
+            }
+            if (flag) {
+                maxDepth++;
+            }
+            for (auto record: newBeam.getRecords()) {
+                beam.insert(record);
+            }
+            if (beam.last().distance >= closestDistance) {
+                break;
+            }
+        }
+
+        // copy beam to result
+        auto j = 0;
+        std::multiset<NodeWithDistance> result;
+        for (auto nodeWithDistance: beam.getRecords()) {
+            if (j >= k) {
+                break;
+            }
+            result.insert({nodeWithDistance.item, nodeWithDistance.distance});
+            j++;
+        }
+
+        return {result, std::chrono::high_resolution_clock::now() - start, nodesVisited, maxDepth};
+    }
+
+    ResultObject SATree::greedyKnnSearch(std::vector<float> &query, int m, int b, int k) {
+        auto start = std::chrono::high_resolution_clock::now();
+        std::multiset<NodeWithDistance> result;
+        size_t nodesVisited = 0;
+        for (int i = 0; i < m; i++) {
+            MinQueue<Node *> tmpResult(b);
+            std::unordered_set<int> visited;
+            // add results to visited
+            auto p = 0;
+            for (auto nodeWithDistance: result) {
+                if (p >= b) {
+                    break;
+                }
+                visited.insert(nodeWithDistance.node->id);
+                p++;
+            }
+            std::priority_queue<Record<Node *>> candidates;
+            candidates.push({root.get(), Utils::l2_distance(root->embedding, query)});
+            nodesVisited++;
+            while (!candidates.empty()) {
+                auto closest = candidates.top();
+                candidates.pop();
+                if (tmpResult.size() >= b && tmpResult.last().distance < closest.distance) {
+                    break;
+                }
+
+                for (const auto &childNode: closest.item->children) {
+                    if (visited.contains(childNode->id)) {
+                        continue;
+                    }
+                    auto child = Record<Node *>{childNode.get(), Utils::l2_distance(childNode->embedding, query)};
+                    visited.insert(childNode->id);
+                    candidates.push(child);
+                    tmpResult.insert(child);
+                    nodesVisited++;
+                }
+            }
+            auto j = 0;
+            for (auto nodeWithDistance: tmpResult.getRecords()) {
+                if (j >= b) {
+                    break;
+                }
+                result.insert({nodeWithDistance.item, nodeWithDistance.distance});
+                j++;
+            }
+        }
+        return {result, std::chrono::high_resolution_clock::now() - start, nodesVisited};
+    }
+
+    void SATree::getGraphStats(size_t &avgDegree, size_t &maxDegree, size_t &minDegree) {
+        std::queue<Node *> queue;
+        queue.push(root.get());
+        size_t sumDegree = 0;
+        maxDegree = 0;
+        minDegree = INFINITY;
+        size_t count = 0;
+        while (!queue.empty()) {
+            auto node = queue.front();
+            queue.pop();
+            if (node->children.empty()) {
+                continue;
+            }
+
+            sumDegree += node->children.size();
+            maxDegree = std::max(maxDegree, node->children.size());
+            minDegree = std::min(minDegree, node->children.size());
+            count++;
+            for (const auto &childNode: node->children) {
+                queue.push(childNode.get());
+            }
+        }
+        avgDegree = sumDegree / count;
     }
 
     bool operator<(const QueueObject &x, const QueueObject &y) {

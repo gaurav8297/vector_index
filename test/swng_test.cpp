@@ -10,16 +10,16 @@ TEST(SWGTest, Benchmark) {
     size_t baseDimension, baseNumVectors;
     auto basePath = "/Users/gauravsehgal/work/vector_index/data";
     auto benchmarkType = "siftsmall";
-    auto baseVectorPath = fmt::format("{}/{}/{}_base.fvecs", basePath, benchmarkType, benchmarkType);
-    auto queryVectorPath = fmt::format("{}/{}/{}_query.fvecs", basePath, benchmarkType, benchmarkType);
-    auto gtVectorPath = fmt::format("{}/{}/{}_groundtruth.ivecs", basePath, benchmarkType, benchmarkType);
+    auto baseVectorPath = fmt::format("{}/{}/base.fvecs", basePath, benchmarkType, benchmarkType);
+    auto queryVectorPath = fmt::format("{}/{}/query.fvecs", basePath, benchmarkType, benchmarkType);
+    auto gtVectorPath = fmt::format("{}/{}/groundtruth.ivecs", basePath, benchmarkType, benchmarkType);
 
     float* baseVecs = Utils::fvecs_read(baseVectorPath.c_str(),&baseDimension,&baseNumVectors);
 
     auto mCreates = {10};
-    auto kCreates = {10};
-    auto mSearches = {32, 64, 128};
-    int kSearch = 10;
+    auto kCreates = {30};
+    auto mSearches = {16, 32, 64, 100, 128};
+    int kSearch = 100;
 
     for (auto mCreate : mCreates) {
         for (auto kCreate: kCreates) {
@@ -58,7 +58,7 @@ TEST(SWGTest, Benchmark) {
                 for (int i = 0; i < queryNumVectors; i++) {
                     auto query = queryEmbeddings[i];
                     auto gt = groundTruth[i];
-                    auto res = swng.beamKnnSearch(query, mSearch, kSearch);
+                    auto res = swng.greedyKnnSearch(query, mSearch, kSearch);
                     for (auto nodeWithDistance: res.nodes) {
                         if (std::find(gt.begin(), gt.end(), nodeWithDistance.item->id) != gt.end()) {
                             avgRecall++;
