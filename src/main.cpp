@@ -66,10 +66,12 @@ int main(int argc, char **argv) {
     auto m = stoi(input.getCmdOption("-m"));
     auto pq_m = stoi(input.getCmdOption("-pq_m"));
     auto efSearch = stoi(input.getCmdOption("-efSearch"));
+    auto nThreads = stoi(input.getCmdOption("-nThreads"));
 
     auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
     auto queryVectorPath = fmt::format("{}/query.fvecs", basePath);
     auto gtVectorPath = fmt::format("{}/groundtruth.ivecs", basePath);
+    omp_set_num_threads(nThreads);
 
     size_t baseDimension, baseNumVectors;
     float* baseVecs = Utils::fvecs_read(baseVectorPath.c_str(),&baseDimension,&baseNumVectors);
