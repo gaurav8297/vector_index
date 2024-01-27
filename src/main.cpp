@@ -59,21 +59,51 @@ int getValue(){ //Note: this value is in KB!
 
 int main(int argc, char **argv) {
     InputParser input(argc, argv);
-//    const std::string &basePath = input.getCmdOption("-f");
-//    auto k = stoi(input.getCmdOption("-k"));
-//    auto indexType = stoi(input.getCmdOption("-t"));
-//    auto efConstruction = stoi(input.getCmdOption("-efConstruction"));
-//    auto m = stoi(input.getCmdOption("-m"));
-//    auto pq_m = stoi(input.getCmdOption("-pq_m"));
-//    auto efSearch = stoi(input.getCmdOption("-efSearch"));
+    const std::string &basePath = input.getCmdOption("-f");
+    auto k = stoi(input.getCmdOption("-k"));
+    auto indexType = input.getCmdOption("-t");
+    auto efConstruction = stoi(input.getCmdOption("-efConstruction"));
+    auto m = stoi(input.getCmdOption("-m"));
+    auto pq_m = stoi(input.getCmdOption("-pq_m"));
+    auto efSearch = stoi(input.getCmdOption("-efSearch"));
 
-//    auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
-//    auto queryVectorPath = fmt::format("{}/query.fvecs", basePath);
-//    auto gtVectorPath = fmt::format("{}/groundtruth.ivecs", basePath);
+    auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
+    auto queryVectorPath = fmt::format("{}/query.fvecs", basePath);
+    auto gtVectorPath = fmt::format("{}/groundtruth.ivecs", basePath);
 
-//    size_t baseDimension, baseNumVectors;
-//    float* baseVecs = Utils::fvecs_read(baseVectorPath.c_str(),&baseDimension,&baseNumVectors);
+    size_t baseDimension, baseNumVectors;
+    float* baseVecs = Utils::fvecs_read(baseVectorPath.c_str(),&baseDimension,&baseNumVectors);
+    size_t queryDimension, queryNumVectors;
+    float *queryVecs = Utils::fvecs_read(queryVectorPath.c_str(), &queryDimension, &queryNumVectors);
+    size_t gtDimension, gtNumVectors;
+    int *gtVecs = Utils::ivecs_read(gtVectorPath.c_str(), &gtDimension, &gtNumVectors);
 
-    std::cout << "Hello World!\n";
+    faiss::IndexHNSW* hnsw = nullptr;
+    if (indexType == "hnsw") {
+        hnsw = new faiss::IndexHNSWFlat(baseDimension, m);
+    } else if (indexType == "hnsw_pq") {
+        hnsw = new faiss::IndexHNSWPQ(baseDimension, pq_m, m);
+        hnsw->train(baseNumVectors, baseVecs);
+    } else {
+        std::cout << "Invalid index type: " << indexType << std::endl;
+        return 1;
+    }
+    hnsw->hnsw.efConstruction = efConstruction;
+    hnsw->hnsw.efSearch = efSearch;
+    hnsw->add(baseNumVectors, baseVecs);
+    int64_t* I = new int64_t[k * queryNumVectors];
+    float* D = new float[k * queryNumVectors];
+    hnsw->search(queryNumVectors, queryVecs, k, D, I);
+
+    int avgRecall = 0;
+    for (int i = 0; i < queryNumVectors; i++) {
+        for (int j = i * gtDimension; j < (i + 1) * gtDimension; j++) {
+            if (queryVecs[j] == gtVecs[j]) {
+                avgRecall++;
+            }
+        }
+    }
+
+    std::cout << "Average recall: " << avgRecall / queryNumVectors << std::endl;
 }
 
