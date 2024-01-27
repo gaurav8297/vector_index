@@ -3,6 +3,7 @@
 #include <random>
 #include <cassert>
 #include "include/utils.h"
+#include <cstring>
 
 namespace vector_index {
     int* Utils::ivecs_read(const char *fname, size_t *d_out, size_t *n_out) {

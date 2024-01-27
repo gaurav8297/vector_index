@@ -1,5 +1,8 @@
+#include <memory>
 #include "include/hnsw.h"
 #include "include/utils.h"
+#include "include/min_queue.h"
+#include "math.h"
 
 namespace vector_index::hnsw {
     HNSW::HNSW(float *data, size_t dimension, size_t numVectors, int efConstruction, int m, int m0): m(m), m0(m0), entrypoint(nullptr), id(0), nodesVisited(0) {

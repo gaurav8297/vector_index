@@ -1,9 +1,11 @@
 #include <unordered_set>
 #include <queue>
+#include <memory>
 #include "include/small_world.h"
 #include "include/utils.h"
 #include "include/min_queue.h"
 #include <random>
+#include <chrono>
 
 namespace vector_index::small_world {
     SmallWorldNG::SmallWorldNG(float *data, size_t dimension, size_t numVectors, int m, int k) {

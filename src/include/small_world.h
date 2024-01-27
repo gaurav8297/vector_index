@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_set>
 #include <set>
+#include <chrono>
 
 namespace vector_index::small_world {
     struct Node {

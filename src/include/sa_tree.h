@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <set>
+#include <chrono>
 
 namespace vector_index::sa_tree {
     struct Node {
