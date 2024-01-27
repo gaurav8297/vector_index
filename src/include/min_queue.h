@@ -23,36 +23,43 @@ namespace vector_index {
     template <typename T>
     class MinQueue {
     public:
-        explicit MinQueue(size_t maxSize): maxSize{maxSize} {};
-        inline void insert(Record<T> record) {
-            if (records.size() < maxSize) {
-                records.insert(record);
-            } else {
-                auto maxRecord = last();
-                if (record.distance < maxRecord.distance) {
-                    records.erase(maxRecord);
+            explicit MinQueue(): maxSize{0} {};
+            explicit MinQueue(size_t maxSize): maxSize{maxSize} {};
+            inline void insert(Record<T> record) {
+                if (records.size() < maxSize) {
                     records.insert(record);
+                } else {
+                    auto maxRecord = last();
+                    if (record.distance < maxRecord.distance) {
+                        records.erase(maxRecord);
+                        records.insert(record);
+                    }
                 }
             }
-        }
-        inline Record<T> pop() {
-            auto last = records.last();
-            records.erase(last);
-            return last;
-        }
+            inline Record<T> pop() {
+                auto last = records.last();
+                records.erase(--records.end());
+                return last;
+            }
 
-        inline size_t size() {
-            return records.size();
-        }
+            inline size_t size() {
+                return records.size();
+            }
 
-        inline Record<T> last() {
-            return *(--records.end());
-        }
+            inline Record<T> last() {
+                return *(--records.end());
+            }
 
-        // return records
-        inline std::set<Record<T>> getRecords() const {
-            return records;
-        }
+            inline Record<T> top() {
+                auto top = *(records.begin());
+                records.erase(records.begin());
+                return top;
+            }
+
+            // return records
+            inline std::set<Record<T>> getRecords() const {
+                return records;
+            }
     private:
         size_t maxSize;
         std::set<Record<T>> records;

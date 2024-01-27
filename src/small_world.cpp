@@ -37,7 +37,7 @@ namespace vector_index::small_world {
         auto node = std::make_unique<Node>();
         node->embedding = nodeEmbedding;
         node->id = id++;
-        node->children = std::unordered_set<Node *>();
+        node->children = std::unordered_set<Node*>();
         if (nodes.size() < k) {
             for (auto &n: nodes) {
                 n->children.insert(node.get());
@@ -239,25 +239,24 @@ namespace vector_index::small_world {
         auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < m; i++) {
             MinQueue<Node *> tmpResult(k);
-            std::priority_queue<Record<Node*>> candidates;
+            MinQueue<Node *> candidates(k + 1);
             int rand = Utils::rand_int(0, nodes.size() - 1);
             if (visited.size() >= nodes.size()) {
                 break;
             }
-            while (visited.contains(rand)) {
-                rand = Utils::rand_int(0, nodes.size() - 1);
-            }
+//            while (visited.contains(rand)) {
+//                rand = Utils::rand_int(0, nodes.size() - 1);
+//            }
             auto entrypoint = nodes.at(rand).get();
-            candidates.push({entrypoint, Utils::l2_distance(entrypoint->embedding, query)});
+            candidates.insert({entrypoint, Utils::l2_distance(entrypoint->embedding, query)});
             nodesVisited++;
             size_t depth = 0;
-            while (!candidates.empty()) {
+            while (candidates.size() != 0) {
                 auto closest = candidates.top();
-                candidates.pop();
                 if (tmpResult.size() >= k && tmpResult.last().distance < closest.distance) {
                     break;
                 }
-//                if (result.size() >= k && std::next(result.begin(), (k - 1))->distance < closest.distance) {
+//                if (result.size() >= k && result.last().distance < closest.distance) {
 //                    break;
 //                }
                 auto countDepth = false;
@@ -265,9 +264,9 @@ namespace vector_index::small_world {
                     if (visited.contains(childNode->id)) {
                         continue;
                     }
-                    auto child = Record<Node *>{childNode, Utils::l2_distance(childNode->embedding, query)};
+                    auto child = Record<Node*>{childNode, Utils::l2_distance(childNode->embedding, query)};
                     visited.insert(childNode->id);
-                    candidates.push(child);
+                    candidates.insert(child);
                     tmpResult.insert(child);
                     hops++;
                     countDepth = true;

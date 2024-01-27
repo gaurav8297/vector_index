@@ -17,8 +17,8 @@ TEST(SWGTest, Benchmark) {
     float* baseVecs = Utils::fvecs_read(baseVectorPath.c_str(),&baseDimension,&baseNumVectors);
 
     auto mCreates = {10};
-    auto kCreates = {30};
-    auto mSearches = {16, 32, 64, 100, 128};
+    auto kCreates = {10};
+    auto mSearches = {2};
     int kSearch = 100;
 
     for (auto mCreate : mCreates) {
