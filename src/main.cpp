@@ -2,6 +2,11 @@
 #include <vector>
 #include "spdlog/fmt/fmt.h"
 #include "faiss/IndexHNSW.h"
+#include <chrono>
+#include <algorithm>
+#include <string>
+#include <sstream>
+#include <iostream>
 
 #include "utils.h"
 
@@ -30,30 +35,12 @@ private:
     std::vector<std::string> tokens;
 };
 
-int parseLine(char* line){
-    // This assumes that a digit will be found and the line ends in " Kb".
-    int i = strlen(line);
-    const char* p = line;
-    while (*p <'0' || *p > '9') p++;
-    line[i-3] = '\0';
-    i = atoi(p);
-    return i;
-}
-
-
-int getValue(){ //Note: this value is in KB!
-    FILE* file = fopen("/proc/self/status", "r");
-    int result = -1;
-    char line[128];
-
-    while (fgets(line, 128, file) != NULL){
-        if (strncmp(line, "VmSize:", 7) == 0){
-            result = parseLine(line);
-            break;
-        }
+void splitCommaSeperatedString(const std::string &s, std::vector<int> &elems) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, ',')) {
+        elems.push_back(stoi(item));
     }
-    fclose(file);
-    return result;
 }
 
 
@@ -66,12 +53,13 @@ int main(int argc, char **argv) {
     auto m = stoi(input.getCmdOption("-m"));
     auto pq_m = stoi(input.getCmdOption("-pq_m"));
     auto efSearch = stoi(input.getCmdOption("-efSearch"));
-    auto nThreads = stoi(input.getCmdOption("-nThreads"));
+    auto nIndexingThreads = stoi(input.getCmdOption("-nIndexingThreads"));
+    std::vector<int> nSearchThreads;
+    splitCommaSeperatedString(input.getCmdOption("-nSearchThreads"), nSearchThreads);
 
     auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
     auto queryVectorPath = fmt::format("{}/query.fvecs", basePath);
     auto gtVectorPath = fmt::format("{}/groundtruth.ivecs", basePath);
-    omp_set_num_threads(nThreads);
 
     size_t baseDimension, baseNumVectors;
     float* baseVecs = Utils::fvecs_read(baseVectorPath.c_str(),&baseDimension,&baseNumVectors);
@@ -80,6 +68,15 @@ int main(int argc, char **argv) {
     size_t gtDimension, gtNumVectors;
     int *gtVecs = Utils::ivecs_read(gtVectorPath.c_str(), &gtDimension, &gtNumVectors);
 
+    omp_set_num_threads(nIndexingThreads);
+    std::cout << "Base dimension: " << baseDimension << std::endl;
+    std::cout << "Base num vectors: " << baseNumVectors << std::endl;
+    std::cout << "Query dimension: " << queryDimension << std::endl;
+    std::cout << "Query num vectors: " << queryNumVectors << std::endl;
+    std::cout << "Ground truth dimension: " << gtDimension << std::endl;
+    std::cout << "Ground truth num vectors: " << gtNumVectors << std::endl;
+    std::cout << "\nStarted build index: " << indexType << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
     faiss::IndexHNSW* hnsw = nullptr;
     if (indexType == "hnsw") {
         hnsw = new faiss::IndexHNSWFlat(baseDimension, m);
@@ -93,19 +90,41 @@ int main(int argc, char **argv) {
     hnsw->hnsw.efConstruction = efConstruction;
     hnsw->hnsw.efSearch = efSearch;
     hnsw->add(baseNumVectors, baseVecs);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "Indexing time: " << duration << " ms" << std::endl;
     int64_t* I = new int64_t[k * queryNumVectors];
     float* D = new float[k * queryNumVectors];
-    hnsw->search(queryNumVectors, queryVecs, k, D, I);
 
-    int avgRecall = 0;
-    for (int i = 0; i < queryNumVectors; i++) {
-        for (int j = i * gtDimension; j < (i + 1) * gtDimension; j++) {
-            if (queryVecs[j] == gtVecs[j]) {
-                avgRecall++;
+    for (auto nSearchThread: nSearchThreads) {
+        // Find query per seconds
+        omp_set_num_threads(nSearchThread);
+        start = std::chrono::high_resolution_clock::now();
+        hnsw->search(queryNumVectors, queryVecs, k, D, I);
+        end = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        auto queriesPerSecond = (queryNumVectors * 1000.0) / duration;
+        std::cout << "\nNumber of Search threads: " << nSearchThread << std::endl;
+        std::cout << "Search time: " << duration << " ms" << std::endl;
+        std::cout << "Queries per second: " << queriesPerSecond << std::endl;
+
+        double avgRecall = 0;
+        double avgRecallAt1 = 0;
+        for (int i = 0; i < queryNumVectors; i++) {
+            std::vector<int> gt;
+            for (int j = i * gtDimension; j < (i + 1) * gtDimension; j++) {
+                if (I[j] == gtVecs[j]) {
+                    avgRecall++;
+                }
+                gt.push_back(gtVecs[j]);
+            }
+            for (int j = i * gtDimension; j < (i + 1) * gtDimension; j++) {
+                if (std::find(gt.begin(), gt.end(), I[j]) != gt.end()) {
+                    avgRecallAt1++;
+                }
             }
         }
+        std::cout << "Average recall (exact pos): " << avgRecall / queryNumVectors << std::endl;
+        std::cout << "Average recall: " << avgRecallAt1 / queryNumVectors << std::endl;
     }
-
-    std::cout << "Average recall: " << avgRecall / queryNumVectors << std::endl;
 }
-
