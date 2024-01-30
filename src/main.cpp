@@ -7,6 +7,9 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <unistd.h>
+#include <ios>
+#include <fstream>
 
 #include "utils.h"
 
@@ -43,6 +46,43 @@ void splitCommaSeperatedString(const std::string &s, std::vector<int> &elems) {
     }
 }
 
+void process_mem_usage(double& vm_usage, double& resident_set)
+{
+    using std::ios_base;
+    using std::ifstream;
+    using std::string;
+
+    vm_usage     = 0.0;
+    resident_set = 0.0;
+
+    // 'file' stat seems to give the most reliable results
+    //
+    ifstream stat_stream("/proc/self/stat",ios_base::in);
+
+    // dummy vars for leading entries in stat that we don't care about
+    //
+    string pid, comm, state, ppid, pgrp, session, tty_nr;
+    string tpgid, flags, minflt, cminflt, majflt, cmajflt;
+    string utime, stime, cutime, cstime, priority, nice;
+    string O, itrealvalue, starttime;
+
+    // the two fields we want
+    //
+    unsigned long vsize;
+    long rss;
+
+    stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+                >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+                >> utime >> stime >> cutime >> cstime >> priority >> nice
+                >> O >> itrealvalue >> starttime >> vsize >> rss; // don't care about the rest
+
+    stat_stream.close();
+
+    long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+    vm_usage     = vsize / 1024.0;
+    resident_set = rss * page_size_kb;
+}
+
 
 int main(int argc, char **argv) {
     InputParser input(argc, argv);
@@ -68,6 +108,10 @@ int main(int argc, char **argv) {
     size_t gtDimension, gtNumVectors;
     int *gtVecs = Utils::ivecs_read(gtVectorPath.c_str(), &gtDimension, &gtNumVectors);
 
+    double vm, rss;
+    process_mem_usage(vm, rss);
+    std::cout << "Before training VM: " << vm << "; RSS: " << rss << std::endl;
+
     omp_set_num_threads(nIndexingThreads);
     std::cout << "Base dimension: " << baseDimension << std::endl;
     std::cout << "Base num vectors: " << baseNumVectors << std::endl;
@@ -87,6 +131,8 @@ int main(int argc, char **argv) {
         std::cout << "Invalid index type: " << indexType << std::endl;
         return 1;
     }
+    process_mem_usage(vm, rss);
+    std::cout << "After training VM: " << vm << "; RSS: " << rss << std::endl;
     hnsw->hnsw.efConstruction = efConstruction;
     hnsw->hnsw.efSearch = efSearch;
     hnsw->add(baseNumVectors, baseVecs);
@@ -96,11 +142,16 @@ int main(int argc, char **argv) {
     int64_t* I = new int64_t[k * queryNumVectors];
     float* D = new float[k * queryNumVectors];
 
+    process_mem_usage(vm, rss);
+    std::cout << "After index build: VM: " << vm << "; RSS: " << rss << std::endl;
+
     for (auto nSearchThread: nSearchThreads) {
         // Find query per seconds
         omp_set_num_threads(nSearchThread);
         start = std::chrono::high_resolution_clock::now();
         hnsw->search(queryNumVectors, queryVecs, k, D, I);
+        process_mem_usage(vm, rss);
+        std::cout << "After search VM: " << vm << "; RSS: " << rss << std::endl;
         end = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         auto queriesPerSecond = (queryNumVectors * 1000.0) / duration;
