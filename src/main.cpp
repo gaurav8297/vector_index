@@ -92,6 +92,7 @@ int main(int argc, char **argv) {
     auto efConstruction = stoi(input.getCmdOption("-efConstruction"));
     auto m = stoi(input.getCmdOption("-m"));
     auto pq_m = stoi(input.getCmdOption("-pq_m"));
+    auto pq_bits = stoi(input.getCmdOption("-pq_bits"));
     auto efSearch = stoi(input.getCmdOption("-efSearch"));
     auto nIndexingThreads = stoi(input.getCmdOption("-nIndexingThreads"));
     std::vector<int> nSearchThreads;
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
     if (indexType == "hnsw") {
         hnsw = new faiss::IndexHNSWFlat(baseDimension, m);
     } else if (indexType == "hnsw_pq") {
-        hnsw = new faiss::IndexHNSWPQ(baseDimension, pq_m, m);
+        hnsw = new faiss::IndexHNSWPQ(baseDimension, pq_m, m, pq_bits);
         hnsw->train(baseNumVectors, baseVecs);
     } else {
         std::cout << "Invalid index type: " << indexType << std::endl;
