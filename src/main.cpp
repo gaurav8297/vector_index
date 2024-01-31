@@ -122,12 +122,18 @@ int main(int argc, char **argv) {
     std::cout << "Ground truth num vectors: " << gtNumVectors << std::endl;
     std::cout << "\nStarted build index: " << indexType << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     faiss::IndexHNSW* hnsw = nullptr;
     if (indexType == "hnsw") {
         hnsw = new faiss::IndexHNSWFlat(baseDimension, m);
     } else if (indexType == "hnsw_pq") {
         hnsw = new faiss::IndexHNSWPQ(baseDimension, pq_m, m, pq_bits);
         hnsw->train(baseNumVectors, baseVecs);
+        end = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "Training time: " << duration << " ms" << std::endl;
+        start = std::chrono::high_resolution_clock::now();
     } else {
         std::cout << "Invalid index type: " << indexType << std::endl;
         return 1;
@@ -137,8 +143,8 @@ int main(int argc, char **argv) {
     hnsw->hnsw.efConstruction = efConstruction;
     hnsw->hnsw.efSearch = efSearch;
     hnsw->add(baseNumVectors, baseVecs);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     std::cout << "Indexing time: " << duration << " ms" << std::endl;
     int64_t* I = new int64_t[k * queryNumVectors];
     float* D = new float[k * queryNumVectors];
