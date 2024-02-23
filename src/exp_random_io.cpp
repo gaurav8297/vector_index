@@ -258,10 +258,10 @@ int main(int argc, char **argv) {
     printf("Chunk size: %ld\n", chunkSize);
     printf("With kernel cache: %d\n", withKernelCache);
 
+    run_benchmark([&](){return read_sequential(filePath.data(), numRandomOperations, chunkSize, withKernelCache, fileSize, gap);}, "read_sequential");
     run_benchmark([&](){return run_on_multiple_threads(filePath.data(), numThreads, numRandomOperations, chunkSize, withKernelCache, fileSize, gap);}, "run_on_multiple_threads");
     run_benchmark([&](){return run_exp_with_uv(filePath.data(), numRandomOperations, chunkSize, withKernelCache, fileSize, gap);}, "run_exp_with_uv");
     run_benchmark([&](){return read_sorted_random_on_single_thread(filePath.data(), numRandomOperations, chunkSize, withKernelCache, fileSize, gap);}, "read_sorted_random_on_single_thread");
     run_benchmark([&](){return read_random_on_single_thread(filePath.data(), numRandomOperations, chunkSize, withKernelCache, fileSize, gap);}, "read_random_on_single_thread");
-    run_benchmark([&](){return read_sequential(filePath.data(), numRandomOperations, chunkSize, withKernelCache, fileSize, gap);}, "read_sequential");
     return 0;
 }
