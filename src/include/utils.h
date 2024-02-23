@@ -15,5 +15,11 @@ namespace vector_index {
         static double rand_double();
 
         static int rand_int(int min, int max);
+
+        static int open_file(const char* fname, int flags, int mode);
+
+        static int close(int fd);
+
+        static int read(int fd, void* buf, size_t numBytes, off_t offset);
     };
 } // namespace vector_index

@@ -12,6 +12,11 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 # On Linux, symbols in executables are not accessible by loaded shared libraries (e.g. via dlopen(3)). However, we need to export public symbols in executables so that extensions can access public symbols. This enables that behaviour.
 set(CMAKE_ENABLE_EXPORTS TRUE)
 
+# Try to find the header
+FIND_PATH(LIBUV_INCLUDE_DIR NAMES uv.h REQUIRED)
+
+# Try to find the library
+FIND_LIBRARY(LIBUV_LIBRARY NAMES uv libuv REQUIRED)
 
 # place binaries and libraries according to GNU standards
 include(GNUInstallDirs)
@@ -32,14 +37,15 @@ endfunction()
 include_directories(${PROJECT_SOURCE_DIR}/src/include)
 include_directories(${PROJECT_SOURCE_DIR}/third_party/spdlog)
 include_directories(${PROJECT_SOURCE_DIR}/third_party/faiss)
+include_directories(${LIBUV_INCLUDE_DIR})
 # add source path
 add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/faiss)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src)
 add_definitions(-DTEST_FILES_DIR="test/test_files")
 add_subdirectory(${PROJECT_SOURCE_DIR}/test)
 
-add_executable(vector_index_main ${PROJECT_SOURCE_DIR}/src/main.cpp)
-target_link_libraries(vector_index_main PUBLIC vector_index faiss)
+add_executable(vector_index_main ${PROJECT_SOURCE_DIR}/src/exp_random_io.cpp)
+target_link_libraries(vector_index_main PUBLIC vector_index faiss ${LIBUV_LIBRARY})
 target_include_directories(vector_index_main PUBLIC
         ${PROJECT_SOURCE_DIR}/src/include
         ${PROJECT_SOURCE_DIR}/third_party/spdlog

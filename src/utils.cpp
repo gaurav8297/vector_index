@@ -4,6 +4,8 @@
 #include <cassert>
 #include "include/utils.h"
 #include <cstring>
+#include <sys/fcntl.h>
+#include <unistd.h>
 
 namespace vector_index {
     int* Utils::ivecs_read(const char *fname, size_t *d_out, size_t *n_out) {
@@ -71,5 +73,17 @@ namespace vector_index {
         std::default_random_engine e1(r());
         std::uniform_int_distribution<int> uniform_dist(min,max);
         return uniform_dist(e1);
+    }
+
+    int Utils::open_file(const char *fname, int flags, int mode) {
+        return open(fname, flags, mode);
+    }
+
+    int Utils::read(int fd, void *buf, size_t numBytes, off_t offset) {
+        return pread(fd, buf, numBytes, offset);
+    }
+
+    int Utils::close(int fd) {
+        return close(fd);
     }
 } // namespace vector_index
