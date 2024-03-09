@@ -44,7 +44,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/src)
 add_definitions(-DTEST_FILES_DIR="test/test_files")
 add_subdirectory(${PROJECT_SOURCE_DIR}/test)
 
-add_executable(vector_index_main ${PROJECT_SOURCE_DIR}/src/exp_random_io.cpp)
+add_executable(vector_index_main ${PROJECT_SOURCE_DIR}/src/main.cpp)
 target_link_libraries(vector_index_main PUBLIC vector_index faiss ${LIBUV_LIBRARY})
 target_include_directories(vector_index_main PUBLIC
         ${PROJECT_SOURCE_DIR}/src/include
