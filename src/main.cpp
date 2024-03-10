@@ -97,9 +97,9 @@ int main(int argc, char **argv) {
 //    std::vector<int> nSearchThreads;
 //    splitCommaSeperatedString(input.getCmdOption("-nSearchThreads"), nSearchThreads);
 
-    auto basePath = "/home/gaurav/vector_index_experiments/gist";
+    auto basePath = "/home/gaurav/vector_index_experiments/vector_index/data/siftsmall";
 
-    auto baseVectorPath = fmt::format("{}/gist_base.fvecs", basePath);
+    auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
 
 //    auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
 //    auto queryVectorPath = fmt::format("{}/query.fvecs", basePath);
