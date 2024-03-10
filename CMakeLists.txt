@@ -33,6 +33,9 @@ function(add_test TEST_NAME)
     gtest_discover_tests(${TEST_NAME})
 endfunction()
 
+set(CMAKE_C_FLAGS "-g")
+set(CMAKE_CXX_FLAGS "-g")
+
 # add include path
 include_directories(${PROJECT_SOURCE_DIR}/src/include)
 include_directories(${PROJECT_SOURCE_DIR}/third_party/spdlog)
