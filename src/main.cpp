@@ -47,6 +47,13 @@ void splitCommaSeperatedString(const std::string &s, std::vector<int> &elems) {
 
 void process_mem_usage(double& vm_usage, double& resident_set)
 {
+    int64_t duration = 0;
+    for (int i =0; i < 1000; i++) {
+        duration += exp_l2_sqr_dist();
+    }
+    int64_t avg_dur = duration / 1000;
+    printf("Avg furation: %ld\n", avg_dur);
+
     using std::ios_base;
     using std::ifstream;
     using std::string;
@@ -97,7 +104,7 @@ int main(int argc, char **argv) {
 //    std::vector<int> nSearchThreads;
 //    splitCommaSeperatedString(input.getCmdOption("-nSearchThreads"), nSearchThreads);
 
-    auto basePath = "/home/gaurav/vector_index_experiments/vector_index/data/siftsmall";
+    auto basePath = "/home/gaurav/vector_index_experiments/vector_index/data/gist_50k";
 
     auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
 
@@ -116,7 +123,7 @@ int main(int argc, char **argv) {
 //    process_mem_usage(vm, rss);
     std::cout << "Before training VM: " << vm << "; RSS: " << rss << std::endl;
 
-    omp_set_num_threads(32);
+    omp_set_num_threads(64);
     std::cout << "Base dimension: " << baseDimension << std::endl;
     std::cout << "Base num vectors: " << baseNumVectors << std::endl;
 //    std::cout << "Query dimension: " << queryDimension << std::endl;
