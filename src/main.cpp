@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
 //    process_mem_usage(vm, rss);
     std::cout << "Before training VM: " << vm << "; RSS: " << rss << std::endl;
 
-    omp_set_num_threads(64);
+    omp_set_num_threads(32);
     std::cout << "Base dimension: " << baseDimension << std::endl;
     std::cout << "Base num vectors: " << baseNumVectors << std::endl;
 //    std::cout << "Query dimension: " << queryDimension << std::endl;
