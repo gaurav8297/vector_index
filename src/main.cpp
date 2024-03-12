@@ -47,13 +47,6 @@ void splitCommaSeperatedString(const std::string &s, std::vector<int> &elems) {
 
 void process_mem_usage(double& vm_usage, double& resident_set)
 {
-    int64_t duration = 0;
-    for (int i =0; i < 1000; i++) {
-        duration += exp_l2_sqr_dist();
-    }
-    int64_t avg_dur = duration / 1000;
-    printf("Avg furation: %ld\n", avg_dur);
-
     using std::ios_base;
     using std::ifstream;
     using std::string;
