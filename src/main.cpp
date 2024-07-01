@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 //    auto pq_m = stoi(input.getCmdOption("-pq_m"));
 //    auto pq_bits = stoi(input.getCmdOption("-pq_bits"));
 //    auto efSearch = stoi(input.getCmdOption("-efSearch"));
-//    auto nIndexingThreads = stoi(input.getCmdOption("-nIndexingThreads"));
+    auto nIndexingThreads = stoi(input.getCmdOption("-nt"));
 //    std::vector<int> nSearchThreads;
 //    splitCommaSeperatedString(input.getCmdOption("-nSearchThreads"), nSearchThreads);
     auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 //    process_mem_usage(vm, rss);
     std::cout << "Before training VM: " << vm << "; RSS: " << rss << std::endl;
 
-    omp_set_num_threads(32);
+    omp_set_num_threads(nIndexingThreads);
     std::cout << "Base dimension: " << baseDimension << std::endl;
     std::cout << "Base num vectors: " << baseNumVectors << std::endl;
 //    std::cout << "Query dimension: " << queryDimension << std::endl;
@@ -121,8 +121,6 @@ int main(int argc, char **argv) {
 //    std::cout << "Ground truth num vectors: " << gtNumVectors << std::endl;
 //    std::cout << "\nStarted build index: " << indexType << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     faiss::IndexHNSW* hnsw = nullptr;
     hnsw = new faiss::IndexHNSWFlat(baseDimension, 64);
 //    if (indexType == "hnsw") {
@@ -142,8 +140,8 @@ int main(int argc, char **argv) {
     hnsw->hnsw.efConstruction = 100;
     hnsw->hnsw.efSearch = 100;
     hnsw->add(baseNumVectors, baseVecs);
-    end = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     std::cout << "Indexing time: " << duration << " ms" << std::endl;
 //    int64_t* I = new int64_t[k * queryNumVectors];
 //    float* D = new float[k * queryNumVectors];
