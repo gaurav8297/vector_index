@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <ios>
 #include <fstream>
-#include <chrono>
 
 #include "utils.h"
 
@@ -97,7 +96,7 @@ int main(int argc, char **argv) {
 //    std::vector<int> nSearchThreads;
 //    splitCommaSeperatedString(input.getCmdOption("-nSearchThreads"), nSearchThreads);
 
-    auto basePath = "/home/gaurav/vector_index_experiments/vector_index/data/gist_50k";
+    auto basePath = "/home/g3sehgal/vector_index_exp/gist_50k";
 
     auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
 
@@ -143,8 +142,8 @@ int main(int argc, char **argv) {
 //    }
 //    process_mem_usage(vm, rss);
     std::cout << "After training VM: " << vm << "; RSS: " << rss << std::endl;
-    hnsw->hnsw.efConstruction = 120;
-    hnsw->hnsw.efSearch = 120;
+    hnsw->hnsw.efConstruction = 100;
+    hnsw->hnsw.efSearch = 100;
     hnsw->add(baseNumVectors, baseVecs);
     end = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
