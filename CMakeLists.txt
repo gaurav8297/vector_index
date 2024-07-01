@@ -32,9 +32,10 @@ function(add_test TEST_NAME)
     include(GoogleTest)
     gtest_discover_tests(${TEST_NAME})
 endfunction()
-
-set(CMAKE_C_FLAGS "-g -O2 -march=native")
-set(CMAKE_CXX_FLAGS "-g -O2 -march=native")
+set(BLA_VENDOR OpenBLAS)
+set(CMAKE_C_FLAGS "-g -O2 -march=native -fopenmp")
+set(CMAKE_CXX_FLAGS "-g -O2 -march=native -fopenmp")
+find_package(BLAS REQUIRED)
 
 # add include path
 include_directories(${PROJECT_SOURCE_DIR}/src/include)
