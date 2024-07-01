@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 //    std::vector<int> nSearchThreads;
 //    splitCommaSeperatedString(input.getCmdOption("-nSearchThreads"), nSearchThreads);
 
-    auto basePath = "/home/g3sehgal/vector_index_exp/gist_50k";
+    auto basePath = "/home/g3sehgal/vector_index_exp/gist";
 
     auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
 
