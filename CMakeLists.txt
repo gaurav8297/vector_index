@@ -13,7 +13,7 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_ENABLE_EXPORTS TRUE)
 
 # Try to find the header
-FIND_PATH(LIBUV_INCLUDE_DIR NAMES uv.h REQUIRED)
+#FIND_PATH(LIBUV_INCLUDE_DIR NAMES uv.h REQUIRED)
 
 # Try to find the library
 #FIND_LIBRARY(LIBUV_LIBRARY NAMES uv libuv REQUIRED)
@@ -40,7 +40,7 @@ set(CMAKE_CXX_FLAGS "-g -O2 -march=native")
 include_directories(${PROJECT_SOURCE_DIR}/src/include)
 include_directories(${PROJECT_SOURCE_DIR}/third_party/spdlog)
 include_directories(${PROJECT_SOURCE_DIR}/third_party/faiss)
-include_directories(${LIBUV_INCLUDE_DIR})
+#include_directories(${LIBUV_INCLUDE_DIR})
 # add source path
 add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/faiss)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src)
