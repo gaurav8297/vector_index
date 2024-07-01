@@ -16,7 +16,7 @@ set(CMAKE_ENABLE_EXPORTS TRUE)
 FIND_PATH(LIBUV_INCLUDE_DIR NAMES uv.h REQUIRED)
 
 # Try to find the library
-FIND_LIBRARY(LIBUV_LIBRARY NAMES uv libuv REQUIRED)
+#FIND_LIBRARY(LIBUV_LIBRARY NAMES uv libuv REQUIRED)
 
 # place binaries and libraries according to GNU standards
 include(GNUInstallDirs)
@@ -48,7 +48,7 @@ add_definitions(-DTEST_FILES_DIR="test/test_files")
 add_subdirectory(${PROJECT_SOURCE_DIR}/test)
 
 add_executable(vector_index_main ${PROJECT_SOURCE_DIR}/src/main.cpp)
-target_link_libraries(vector_index_main PUBLIC vector_index faiss ${LIBUV_LIBRARY})
+target_link_libraries(vector_index_main PUBLIC vector_index faiss)
 target_include_directories(vector_index_main PUBLIC
         ${PROJECT_SOURCE_DIR}/src/include
         ${PROJECT_SOURCE_DIR}/third_party/spdlog
