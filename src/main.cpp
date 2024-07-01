@@ -83,8 +83,8 @@ void process_mem_usage(double& vm_usage, double& resident_set)
 
 
 int main(int argc, char **argv) {
-//    InputParser input(argc, argv);
-//    const std::string &basePath = input.getCmdOption("-f");
+    InputParser input(argc, argv);
+    const std::string &basePath = input.getCmdOption("-f");
 //    auto k = stoi(input.getCmdOption("-k"));
 //    auto indexType = input.getCmdOption("-t");
 //    auto efConstruction = stoi(input.getCmdOption("-efConstruction"));
@@ -95,9 +95,6 @@ int main(int argc, char **argv) {
 //    auto nIndexingThreads = stoi(input.getCmdOption("-nIndexingThreads"));
 //    std::vector<int> nSearchThreads;
 //    splitCommaSeperatedString(input.getCmdOption("-nSearchThreads"), nSearchThreads);
-
-    auto basePath = "/home/g3sehgal/vector_index_exp/gist";
-
     auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
 
 //    auto baseVectorPath = fmt::format("{}/base.fvecs", basePath);
